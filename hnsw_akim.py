@@ -7,6 +7,7 @@ from operator import itemgetter
 import pickle
 import numpy as np
 from math import log2
+from collections import Counter
 
 inf = np.float64('inf')
 
@@ -93,7 +94,7 @@ class HNSW:
         Instead of choosing randomly the level of an element as proposed
         in the original paper, an element is raised to a higher level
         in case its degree is m and there are no neighbours in the
-        higher level.
+        higher level. 
         """
 
         if ef is None:
@@ -322,10 +323,12 @@ if __name__ == '__main__':
     from random import seed, randrange
     from time import sleep
 
+    
     from matplotlib import pyplot as plt
     from matplotlib import collections as mc
 
     from argparse import ArgumentParser
+    """Here we will parse arguments"""
 
     parser = ArgumentParser()
     parser.add_argument('--balanced', action='store_true')
