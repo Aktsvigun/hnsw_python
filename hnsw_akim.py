@@ -12,7 +12,7 @@ inf = np.float64('inf')
 
 class HNSW:
 
-    # http://arxiv.org/pdf/1603.09320v2.pdf
+    # Основано на статье: http://arxiv.org/pdf/1603.09320v2.pdf
 
     def __init__(self, distance, short_connections=5, efficient=200, init_connection=None, level_mult=None,
                  heuristic=True, vectorized=False):
@@ -41,7 +41,7 @@ class HNSW:
                         else self._select_naive)
 
     def add(self, elem, ef=None):
-        """Append element to the cloud"""
+        """Добавляем элемент в облако"""
 
         if ef is None:
             ef = self._ef
@@ -52,49 +52,48 @@ class HNSW:
         point = self._enter_point
         m = self._m
 
-        # specify the level where the element will be appended
+        # уровень, на который будет добавлен элемент
         level = int(-log2(uniform()) * self._level_mult) + 1
 
-        # element will be present at data[idx]
+        # элемент будет находиться в data[idx]
         idx = len(data)
         data.append(elem)
 
-        if point is not None: # HNSW is not empty, there is an entry point
+        if point is not None: # если HNSW не пустой
             dist = d(elem, data[point])
-            # for all levels where the element is not inserted,
-            #  search for the closest neighbor
+            # для всех уровней, на кот элемент не был вставлен
+            # ищем ближайшего соседа
             for g in reversed(graphs[level:]):
                 point, dist = self._search_graph_ef1(elem, point, dist, g)
-            # at these levels the element should be inserted;
-            # var 'ep' is a heap of entry points.
+            # на все данные уровнми элемент должен быть добавлен
+            # переменная 'ep' - множество входных точек
             ep = [(-dist, point)]
             g0 = graphs[0]
             for g in reversed(graphs[:level]):
                 level_m = m if g is not g0 else self._m0
-                # navigate the graph and update ep with the closest found nodes
+                # двигаемся по графу и обновляем ep ближайшими найденными узлами
                 ep = self._search_graph(elem, ep, g, ef)
-                # append to g[idx] the best neighbours
+                # добавляем к g[idx] ближайших соседей
                 g[idx] = g_idx = {}
                 self._select(g_idx, ep, level_m, g, heap=True)
                 #assert len(g_idx) <= level_m
-                # append backlinks to the new node
                 for j, dist in g_idx.items():
                     self._select(g[j], (idx, dist), level_m, g)
                     #assert len(g[j]) <= level_m
                 #assert all(e in g for _, e in ep)
         for i in range(len(graphs), level):
-            # create a new graph for all the new levels
+            # для всех новых уровней создаем новый граф
             graphs.append({idx: {}})
             self._enter_point = idx
 
     def balanced_add(self, elem, ef=None):
-        """Add element to the data structure.
-
-        Instead of choosing randomly the level of an element as proposed
-        in the original paper, an element is raised to a higher level
-        in case its degree is m and there are no neighbours in the
-        higher level.
         """
+        Добавить элемент в облако
+
+        Вместо рандомного выбора уровня элемента, как предложено в статье,
+        элемент поднимаемся в высший уровень в случае если его степень - m,
+        и у него нет соседей на уровне выше
+        """ 
 
         if ef is None:
             ef = self._ef
@@ -112,26 +111,19 @@ class HNSW:
         if point is not None:
             dist = d(elem, data[point])
             pd = [(point, dist)]
-            # navigate from the highest level to the lowest searching for the closest
-            # node in each graph. Then save in 'pd' the closest node found
             for g in reversed(graphs[1:]):
                 point, dist = self._search_graph_ef1(elem, point, dist, g)
                 pd.append((point, dist))
-            # navigate vice-versa searching where we should add the new node
             for level, g in enumerate(graphs):
                 level_m = m0 if level == 0 else m
-                # find the candidate neighbours and select the ones to append
                 candidates = self._search_graph(elem, [(-dist, point)], g, ef)
                 g[idx] = g_idx = {}
                 self._select(g_idx, candidates, level_m, g, heap=True)
-                # add reverse edges
                 for j, dist in g_idx.items():
                     self._select(g[j], [idx, dist], level_m, g)
                     assert len(g[j]) <= level_m
-                # break if the node has less than level_m neighbours
                 if len(g_idx) < level_m:
                     return
-                # also break if at least one of the neighbours is in the upper level
                 if level < len(graphs) - 1:
                     if any(p in graphs[level + 1] for p in g_idx):
                         return
@@ -140,7 +132,7 @@ class HNSW:
         self._enter_point = idx        
     
     def search(self, q, k=None, ef=None):
-        """Find the k points closest to q"""
+        """Найти k ближайших точек к q"""
         
         d = self.distance
         graphs = self._graphs
@@ -153,10 +145,8 @@ class HNSW:
             raise ValueError("Empty graph")
         
         dist = d(q, self.data[point])
-        # search the closest neighbour from the top to the second level
         for g in reversed(graphs[1:]):
             point, dist = self._search_graph_ef1(q, point, dist, g)
-        # search efficient neighbours in the bottom level
         ep = self._search_graph(q, [(-dist, point)], graphs[0], ef)
 
         if k is not None:
@@ -167,7 +157,7 @@ class HNSW:
         return [(idx, -md) for md, idx in ep]
 
     def _search_graph_ef1(self, q, entry, dist, g):
-        """Equivalent to _search_graph when ef=1"""
+        """Идентична функции _search_graph при ef=1"""
 
         vd = self.vectorized_distance
         data = self.data
@@ -226,7 +216,7 @@ class HNSW:
 
     def _select_naive(self, d, to_insert, m, g, heap=False):
         
-        if not heap: # shortcut when there is only one thing to append
+        if not heap: 
             idx, dist = to_insert
             assert idx not in d
             if len(d) < m:
@@ -238,9 +228,8 @@ class HNSW:
                     d[idx] = dist
             return
 
-        # when there is more than one item to append, it is more complicated
         assert not any(idx in d for _, idx in to_insert)
-        to_insert = nlargest(m, to_insert) # smallest m distances
+        to_insert = nlargest(m, to_insert) # m наименьших расстояний
         unchecked = m - len(d)
         assert 0 <= unchecked <= m
         to_insert, checked_ins = to_insert[:unchecked], to_insert[unchecked:]
@@ -295,7 +284,7 @@ class HNSW:
             assert len(d) == m
 
     def __getitem__(self, idx):
-        """Returns a list of detected neighbours of the node at index idx"""
+        """ Функция вовзвращает список найденных соседей в вершине с индексом idx """
 
         for g in self._graphs:
             try:
@@ -304,19 +293,19 @@ class HNSW:
                 return
             
     def dump(self, path):
-        """Save the HNSW object"""
+        """ Сохранить HNSW объект """
         with open(path, 'wb') as f:
             pickle.dump(self, f)
     
     @classmethod
     def load(self, path):
-        """Load the HNSW object"""
+        """ Загрузить  HNSW объект """
         with open(path, 'rb') as f:
             hnsw = pickle.load(f)
         return hnsw
 
 
-
+# Пример
 if __name__ == '__main__':
 
     from random import seed, randrange
