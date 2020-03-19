@@ -88,15 +88,6 @@ class HNSW:
             self._enter_point = idx
 
     def balanced_add(self, elem, ef=None):
-<<<<<<< HEAD
-=======
-        """Add element to the data structure.
-
-        Instead of choosing randomly the level of an element as proposed
-        in the original paper, an element is raised to a higher level
-        in case its degree is m and there are no neighbours in the
-        higher level. 
->>>>>>> dcffa55e353c6ebb18935282c4834a3f4940e4ca
         """
         Добавить элемент в облако
 
