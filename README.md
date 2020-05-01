@@ -16,6 +16,6 @@
 * В конце кода представлен пример создания облака HNSW. Все слои представлены на одном рисунке. Фиолетовые линии соответстуют связям (ребрам) на нулевом слое, синие - на первом, бирюзовые - на втором, зеленые - на третьем и так далее - чем светлее и больше связи (ребра), тем выше уровень. Для запуска примера необходимо скачать .py файл и в командной строке написать _python hnsw.py_.
 
 <div align="center">
-<img src=https://github.com/Aktsvigun/hnsw_python/blob/master/template.png" >
+<img src="https://github.com/Aktsvigun/hnsw_python/blob/master/template.png" >
 <p>Template HNSW cloud</p>
 </div>
