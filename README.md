@@ -17,5 +17,5 @@
 
 <div align="center">
 <img src="https://github.com/Aktsvigun/hnsw_python/blob/master/template.png" >
-<p>Template HNSW cloud</p>
+<p>Пример облака HNSW</p>
 </div>
