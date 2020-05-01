@@ -6,7 +6,7 @@ from numpy.random import uniform
 from operator import itemgetter
 import pickle
 import numpy as np
-from math import log2
+from numpy import log
 from collections import Counter
 
 inf = np.float64('inf')
@@ -16,9 +16,17 @@ class HNSW:
     # Основано на статье: http://arxiv.org/pdf/1603.09320v2.pdf
 
     def __init__(self, distance, short_connections=5, efficient=200, init_connection=None, level_mult=None,
-                 heuristic=True, vectorized=False):
+                 use_heuristic=True, vectorized=False):
 
         self.data = []
+        self._m = short_connections
+        self._ef = efficient
+        self._m0 = 2 * short_connections if init_connection is None else init_connection
+        self._level_mult = 1 / log(short_connections) if level_mult is None else level_mult
+        self._graphs = []
+        self._enter_point = None
+        self._select = (self._select_heuristic if use_heuristic
+                        else self._select_naive)
 
         if vectorized:
             def self_distance(x, y):
@@ -30,16 +38,6 @@ class HNSW:
             def vd(x, ys):
                 return [d(x, y) for y in ys]
             self.vectorized_distance = vd
-        
-        self._m = short_connections
-        self._ef = efficient
-        self._m0 = 2 * short_connections if init_connection is None else init_connection
-        self._level_mult = 1 / log2(short_connections) if level_mult is None else level_mult
-        self._graphs = []
-        self._enter_point = None
-
-        self._select = (self._select_heuristic if heuristic
-                        else self._select_naive)
 
     def add(self, elem, ef=None):
         """Добавляем элемент в облако"""
@@ -54,9 +52,9 @@ class HNSW:
         m = self._m
 
         # уровень, на который будет добавлен элемент
-        level = int(-log2(uniform()) * self._level_mult) + 1
+        level = int(-log(uniform()) * self._level_mult) + 1
 
-        # элемент будет находиться в data[idx]
+        # индекс элемента будет idx
         idx = len(data)
         data.append(elem)
 
@@ -215,7 +213,7 @@ class HNSW:
 
         return ep
 
-    def _select_naive(self, d, to_insert, m, g, heap=False):
+    def _select_naive(self, d, to_insert, m, heap=False):
         
         if not heap: 
             idx, dist = to_insert
@@ -289,7 +287,7 @@ class HNSW:
 
         for g in self._graphs:
             try:
-                yield from g[idx].items()
+                return (g[idx].items()).__next__()
             except KeyError:
                 return
             
@@ -349,7 +347,7 @@ if __name__ == '__main__':
             dy = ay - by
             return (dx*dx + dy*dy) ** 0.5
 
-    hnsw = HNSW(d, init_connection=args.m0, heuristic=not args.noheuristic)
+    hnsw = HNSW(d, init_connection=args.m0, use_heuristic=not args.noheuristic)
     adder = hnsw.balanced_add if args.balanced else hnsw.add
 
     if args.blobs:
