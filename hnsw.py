@@ -420,4 +420,5 @@ if __name__ == '__main__':
         adder(p)
 
     plot()
+    plt.savefig('template.png')
     plt.show()
