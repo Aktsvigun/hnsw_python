@@ -1,6 +1,6 @@
-#Realization of Hierarchical Navigable Short World as proposed in http://arxiv.org/pdf/1603.09320v2.pdf
+# Realization of Hierarchical Navigable Short World as proposed in http://arxiv.org/pdf/1603.09320v2.pdf
 
-#Реализация алгоритма поиска HNSW, предложенного в статье http://arxiv.org/pdf/1603.09320v2.pdf
+# Реализация алгоритма поиска HNSW, предложенного в статье http://arxiv.org/pdf/1603.09320v2.pdf
 
 * HNSW - Слоистая структура графов. На нулевом слое представлены все N вершин из исходной выборки. Вершина, присутствующая на уровне L так же присутствует на уровне L+1 с вероятностью P. Т.е. кол-во слоёв растет как O(log N). Количество соседей каждой вершины на каждом уровне ограниченно константой, что позволяет делать запросы на добавление и удаление вершины за O(log N).
 
